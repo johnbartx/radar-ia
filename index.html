@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Radar IA</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Radar IA">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f3f5f4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1513" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+/* Layout: une colonne de lecture pour iPhone, un bloc repliable par soir, le plus récent en haut */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --fg:#17201d; --muted:#5b6762; --line:#dbe2df;
+  --accent:#0f7a63; --accent-soft:#dff1ea;
+  --yes:#0f7a63; --yes-bg:#e1f3ec; --no:#7a5a12; --no-bg:#f6ecd5; --warn:#a2341f; --warn-bg:#f9e3dd;
+  --font-display:"Bricolage Grotesque", ui-rounded, system-ui, sans-serif;
+  --font-body:"Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1513; --surface:#18211e; --fg:#e7eeeb; --muted:#9aa8a2; --line:#2a3632;
+  --accent:#4fd1ad; --accent-soft:#183a31;
+  --yes:#5fd8b4; --yes-bg:#163a30; --no:#e7c16e; --no-bg:#3a3018; --warn:#f19a85; --warn-bg:#40231c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1513; --surface:#18211e; --fg:#e7eeeb; --muted:#9aa8a2; --line:#2a3632;
+  --accent:#4fd1ad; --accent-soft:#183a31;
+  --yes:#5fd8b4; --yes-bg:#163a30; --no:#e7c16e; --no-bg:#3a3018; --warn:#f19a85; --warn-bg:#40231c; color-scheme:dark}
+
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:17px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+a{color:var(--accent)}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+
+header{display:flex;flex-direction:column;gap:6px}
+.brand{display:flex;align-items:center;gap:10px}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 5px var(--accent-soft)}
+h1{font-family:var(--font-display);font-weight:800;font-size:1.9rem;line-height:1.1;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:0;font-size:.95rem}
+
+details.day{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+details.day>summary{list-style:none;cursor:pointer;padding:16px 18px;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+details.day>summary::-webkit-details-marker{display:none}
+.daytitle{font-family:var(--font-display);font-weight:800;font-size:1.25rem}
+.daycount{color:var(--muted);font-size:.85rem;white-space:nowrap}
+.daybody{padding:0 18px 18px;display:flex;flex-direction:column;gap:18px}
+.intro{margin:0;padding:12px 14px;background:var(--accent-soft);border-radius:10px;font-size:.95rem}
+
+h2{font-family:var(--font-display);font-weight:600;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
+.list{display:flex;flex-direction:column;gap:0}
+.item{display:flex;flex-direction:column;gap:6px;padding:14px 0;border-top:1px solid var(--line);min-width:0}
+.item:first-child{border-top:0;padding-top:4px}
+.item h3{margin:0;font-size:1.05rem;line-height:1.3;font-weight:700}
+.item p{margin:0}
+.verdict{display:inline-block;font-weight:700;font-size:.85rem;padding:2px 10px;border-radius:999px;margin-right:6px}
+.v-yes{background:var(--yes-bg);color:var(--yes)}
+.v-no{background:var(--no-bg);color:var(--no)}
+.v-warn{background:var(--warn-bg);color:var(--warn)}
+.meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.85rem;color:var(--muted)}
+.meta b{color:var(--fg);font-weight:700}
+.check{font-size:.8rem;color:var(--muted)}
+.check.ok::before{content:"✓ ";color:var(--yes);font-weight:700}
+.check.ko::before{content:"! ";color:var(--warn);font-weight:700}
+.small .item h3{font-size:.98rem}
+.small .item{padding:10px 0}
+footer{color:var(--muted);font-size:.85rem;text-align:center}
+@media (prefers-reduced-motion:no-preference){details.day[open] .daybody{animation:in .25s ease-out}@keyframes in{from{transform:translateY(-4px)}to{transform:none}}}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box} body{margin:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand"><span class="dot" aria-hidden="true"></span><h1>Radar IA de John</h1></div>
+  <p class="sub">Chaque soir, les nouveautés IA qui touchent tes projets : jeu (Godot, 2D, vidéo, sons, stores, traduction), impression 3D et tes outils. Le soir le plus récent est en haut, les anciens restent en dessous.</p>
+</header>
+
+<!-- ===== PREMIÈRE ÉDITION : semaine du 17 au 23 novembre 2026 ===== -->
+<details class="day" open>
+  <summary><span class="daytitle">Semaine du 17 au 23 novembre</span><span class="daycount">7 utiles · 4 pour info</span></summary>
+  <div class="daybody">
+    <p class="intro">Premier radar : il couvre la semaine du 17 au 23 novembre pour bien démarrer. Les prochains soirs ne parleront que des dernières 24 heures.</p>
+
+    <h2>Ça te sert</h2>
+    <div class="list">
+      <article class="item">
+        <h3>Tripo montre un futur modèle fait pour l'impression 3D</h3>
+        <p>Tripo a présenté H3.5, un modèle qui doit sortir des objets prêts à imprimer, et Polipop, un assistant qui transforme une idée en objet imprimable.</p>
+        <p><span class="verdict v-yes">Ça te sert</span>Moins de réparations de maillage avant de passer dans Anycubic Slicer Next. Mais ce n'est pas encore sorti (« bientôt »).</p>
+        <div class="meta"><span>Prix : <b>pas annoncé</b></span><a href="https://www.prnewswire.com/news-releases/tripo-ai-gives-a-first-look-at-its-upcoming-print-ready-generative-model-with-intricate-true-to-life-3d-printed-creations-at-formnext-302939775.html" target="_blank" rel="noopener">Communiqué officiel de Tripo</a></div>
+        <span class="check ok">Vérifié sur le communiqué de Tripo, 17 nov.</span>
+      </article>
+
+      <article class="item">
+        <h3>Meshy : reliefs exportables en 3MF, en couleur</h3>
+        <p>L'outil « Relief » de Meshy (une image transformée en bas-relief 3D) peut maintenant garder les couleurs et sortir en 3MF, OBJ, FBX ou USDZ.</p>
+        <p><span class="verdict v-yes">Ça te sert</span>Le 3MF s'ouvre direct dans ton trancheur, et avec l'ACE Pro tu peux imprimer en plusieurs couleurs. Attention : l'annonce concerne l'API (pour développeurs), je n'ai pas vérifié si le site web l'a déjà.</p>
+        <div class="meta"><span>Prix : <b>20 crédits</b> par relief (inchangé)</span><a href="https://docs.meshy.ai/en/api/relief#create-a-relief-task" target="_blank" rel="noopener">Doc officielle Meshy</a></div>
+        <span class="check ok">Vérifié sur le journal des changements de Meshy, 16 nov.</span>
+      </article>
+
+      <article class="item">
+        <h3>Suno Visuals : un clip vidéo à partir de ta chanson</h3>
+        <p>Suno peut maintenant faire une vidéo ou un clip avec les paroles à partir d'un morceau, en partant d'une photo ou d'une description. Sur le web et l'appli iPhone.</p>
+        <p><span class="verdict v-yes">Ça te sert</span>Pratique pour une bande-annonce ou un teaser de ton jeu avec ta musique Suno.</p>
+        <div class="meta"><span>Prix : <b>pas précisé</b> (gratuit ou payant, la page ne le dit pas)</span><a href="https://suno.com/release-notes/visuals" target="_blank" rel="noopener">Annonce officielle Suno</a></div>
+        <span class="check ok">Vérifié sur les notes de version de Suno, 17 nov.</span>
+      </article>
+
+      <article class="item">
+        <h3>Godot 4.8 bêta 4, la version finale approche</h3>
+        <p>Probablement la dernière bêta avant Godot 4.8 : surtout des corrections de bugs. Une version presque finale (RC) arrive bientôt.</p>
+        <p><span class="verdict v-yes">Ça te sert</span>À suivre pour ton jeu. Ne passe pas ton projet dessus maintenant : attends la version stable, et fais une copie avant.</p>
+        <div class="meta"><span>Prix : <b>gratuit</b></span><a href="https://godotengine.org/article/dev-snapshot-godot-4-8-beta-4/" target="_blank" rel="noopener">Article officiel Godot</a></div>
+        <span class="check ok">Vérifié sur godotengine.org, 18 nov.</span>
+      </article>
+
+      <article class="item">
+        <h3>Nouveau look pour l'appli Claude sur iPhone</h3>
+        <p>L'appli Claude change d'apparence, en commençant par iPhone. Tes discussions, projets et ton abonnement ne bougent pas.</p>
+        <p><span class="verdict v-yes">Ça te sert</span>Tu l'utilises sur iPhone. Il faut iOS 26 ou plus récent.</p>
+        <div class="meta"><span>Prix : <b>gratuit</b> (mise à jour)</span><a href="https://support.claude.com/en/articles/12138966-release-notes" target="_blank" rel="noopener">Notes de version Claude</a></div>
+        <span class="check ok">Vérifié sur le support Claude, 20 nov.</span>
+      </article>
+
+      <article class="item">
+        <h3>Claude sur PC : choisir des mises à jour calmes ou fréquentes</h3>
+        <p>Dans Claude Desktop, tu peux choisir « Stable » (moins de mises à jour, plus testées) ou « Latest » (environ une nouvelle version par jour).</p>
+        <p><span class="verdict v-yes">Ça te sert</span>Reste sur « Stable » (le réglage par défaut) pour éviter les surprises pendant que tu bosses sur ton jeu.</p>
+        <div class="meta"><span>Prix : <b>gratuit</b></span><a href="https://support.claude.com/en/articles/10065433-install-claude-desktop#h_ac219b3bde" target="_blank" rel="noopener">Aide officielle Claude</a></div>
+        <span class="check ok">Vérifié sur le support Claude, 17 nov.</span>
+      </article>
+
+      <article class="item">
+        <h3>ChatGPT : nouveaux modèles GPT-6.2 Astra et Sol</h3>
+        <p>OpenAI sort deux modèles : Astra, le plus fort pour les gros projets, et Sol, plus rapide pour le quotidien. OpenAI dit qu'Astra code mieux, notamment les jeux et la 3D.</p>
+        <p><span class="verdict v-yes">Ça te sert</span>Seulement si tu as un abonnement ChatGPT payant : la version gratuite n'est pas citée.</p>
+        <div class="meta"><span>Prix : <b>abonnement Plus ou plus</b> (prix de l'abonnement pas redonné sur la page)</span><a href="https://openai.com/index/introducing-gpt-6-2-astra-sol/" target="_blank" rel="noopener">Annonce officielle OpenAI</a></div>
+        <span class="check ok">Vérifié sur openai.com, 17 nov.</span>
+      </article>
+    </div>
+
+    <h2>Ça ne te sert pas</h2>
+    <div class="list small">
+      <article class="item">
+        <h3>Claude Meetings et « utilisation de l'ordinateur » pour les entreprises</h3>
+        <p><span class="verdict v-no">Ça ne te sert pas</span>Réservé aux offres Team et Enterprise, pas aux comptes perso.</p>
+        <div class="meta"><a href="https://support.claude.com/en/articles/12138966-release-notes" target="_blank" rel="noopener">Notes de version Claude</a></div>
+        <span class="check ok">Vérifié, 12 et 20 nov.</span>
+      </article>
+      <article class="item">
+        <h3>Meshy : animation des animaux à quatre pattes</h3>
+        <p><span class="verdict v-no">Ça ne te sert pas</span>C'est pour animer des modèles 3D (API). Ton jeu est en 2D.</p>
+        <div class="meta"><a href="https://docs.meshy.ai/en/api/changelog" target="_blank" rel="noopener">Journal Meshy</a></div>
+        <span class="check ok">Vérifié, 18 nov.</span>
+      </article>
+      <article class="item">
+        <h3>Anthropic entre en Bourse</h3>
+        <p><span class="verdict v-no">Ça ne te sert pas</span>De la finance, rien ne change dans Claude pour toi.</p>
+        <div class="meta"><a href="https://www.anthropic.com/news/ipo-close" target="_blank" rel="noopener">Annonce Anthropic</a></div>
+        <span class="check ok">Vérifié, 20 nov.</span>
+      </article>
+      <article class="item">
+        <h3>Godot Showreel 2026</h3>
+        <p><span class="verdict v-no">Pour l'inspiration</span>Une vidéo des meilleurs jeux faits avec Godot cette année. Rien à installer.</p>
+        <div class="meta"><a href="https://godotengine.org/article/godot-showreel-2026/" target="_blank" rel="noopener">Article Godot</a></div>
+        <span class="check ok">Vérifié, 19 nov.</span>
+      </article>
+    </div>
+
+    <h2>Pas pu vérifier</h2>
+    <div class="list small">
+      <article class="item">
+        <h3>Runway et Anycubic Slicer Next</h3>
+        <p><span class="verdict v-warn">Non vérifié</span>Leurs pages officielles de nouveautés n'ont pas pu être lues ce soir. Des sites tiers parlent de changements d'abonnement chez Runway, mais je ne te les donne pas sans confirmation.</p>
+      </article>
+    </div>
+  </div>
+</details>
+
+<footer>Chaque nouvelle est vérifiée sur la source officielle du fabricant. Si une page n'a pas pu être lue, c'est marqué « Non vérifié ».</footer>
+</div>
+</body>
+</html>
